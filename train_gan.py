@@ -6,6 +6,13 @@ import numpy as np
 import tensorflow as tf
 import os
 
+def calc_averages(x):
+    averages = np.average(x,axis=0)
+    return averages
+
+def normalise_inputs(x,averages):
+    x = [a - averages for a in x]
+    return np.array(x)
 
 def train(tpu=False):
     # Detect hardware
@@ -28,13 +35,17 @@ def train(tpu=False):
 
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
+    averages = calc_averages(x_train)
+    x_train = normalise_inputs(x_train,averages)
+    x_test = normalise_inputs(x_test,averages)
+
     x_train = np.expand_dims(x_train,-1)
     x_test = np.expand_dims(x_test,-1)
 
     backbone = ResNet()
     discriminator = Disciminator(backbone)
     classifier = Classifier(backbone,10)
-    classifier.predict(x_test)
+    preds = classifier.predict(x_test)
     classifier.compile(optimizer='adam',loss='sparse_categorical_crossentropy')
     classifier.summary()
 

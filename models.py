@@ -6,8 +6,10 @@ class Classifier(keras.Model):
         #28,28
         self.backbone = backbone
         self.num_classes = num_classes
+        self.bn = keras.layers.BatchNormalization()
         self.flatten = keras.layers.Flatten()
-        self.classifier_layer = keras.layers.Dense(self.num_classes,activation='softmax')
+        self.init = keras.initializers.VarianceScaling(scale=1.0, mode='fan_in', distribution='normal', seed=None)
+        self.classifier_layer = keras.layers.Dense(self.num_classes,activation='softmax',kernel_initializer=self.init)
     
     def get_backbone(self):
         return self.backbone
@@ -18,6 +20,7 @@ class Classifier(keras.Model):
     def call(self,inputs):
         x = self.backbone(inputs)
         x = self.flatten(x)
+        x = self.bn(x)
         return self.classifier_layer(x)
 
     def compute_output_shape(self,input_shape):
@@ -30,7 +33,8 @@ class Disciminator(keras.Model):
         #28,28
         self.backbone = backbone
         self.flatten = keras.layers.Flatten()
-        self.classifier_layer = keras.layers.Dense(1,activation='sigmoid')
+        self.init = keras.initializers.VarianceScaling(scale=1.0, mode='fan_in', distribution='normal', seed=None)
+        self.classifier_layer = keras.layers.Dense(1,activation='sigmoid',kernel_initializer=self.init)
     
     def get_backbone(self):
         return self.backbone
