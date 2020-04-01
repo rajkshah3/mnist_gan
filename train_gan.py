@@ -58,7 +58,7 @@ def train(tpu=False):
     classifier.save_weights('classifier_weights.h5')
     print('done')
 
-    return  classifier, x_test
+    return classifier, x_test
 
 def convert_model_for_tpu(model):
     strategy = tf.contrib.tpu.TPUDistributionStrategy(
