@@ -42,13 +42,14 @@ def train(tpu=False):
     x_train = np.expand_dims(x_train,-1)
     x_test = np.expand_dims(x_test,-1)
 
-    x_train = x_train[:30000]
-    y_train = y_train[:30000]
     x_vali  = x_train[30000:40000]
     y_vali  = y_train[30000:40000]
 
     x_disc  = x_train[40000:]
     y_disc  = y_train[40000:]
+
+    x_train = x_train[:30000]
+    y_train = y_train[:30000]
 
     backbone = ResNet()
     discriminator = Disciminator(backbone)
