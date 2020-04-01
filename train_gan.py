@@ -20,8 +20,8 @@ def train(tpu=False):
     classifier.summary()
 
     if(tpu):
-        classifier = tf.contrib.tpu.keras_to_tpu_model(classifier)
-
+        classifier = convert_model_for_tpu(classifier)
+        
     classifier.fit(x=x_train,y=y_train,batch_size=1000,epochs=1, validation_data=(x_test,y_test))
 
     classifier.save('classifier.h5')
