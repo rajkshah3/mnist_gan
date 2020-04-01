@@ -6,7 +6,26 @@ import numpy as np
 import tensorflow as tf
 import os
 
+
 def train(tpu=False):
+    # Detect hardware
+    try:
+      tpu = tf.distribute.cluster_resolver.TPUClusterResolver() # TPU detection
+    except ValueError: # If TPU not found
+      tpu = None
+
+    if tpu:
+      tf.tpu.experimental.initialize_tpu_system(tpu)
+      strategy = tf.distribute.experimental.TPUStrategy(tpu, steps_per_run=128)
+      print('Running on TPU ', tpu.cluster_spec().as_dict()['worker'])  
+    else:
+      strategy = tf.distribute.get_strategy() # Default strategy that works on CPU and single GPU
+        print('Running on CPU instead')
+
+    scope = strategy.scope()
+
+    print("Number of accelerators: ", strategy.num_replicas_in_sync)
+
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
     x_train = np.expand_dims(x_train,-1)
@@ -15,7 +34,6 @@ def train(tpu=False):
     backbone = ResNet()
     discriminator = Disciminator(backbone)
     classifier = Classifier(backbone,10)
-    # import pdb; pdb.set_trace()  # breakpoint 396fe169 //
     classifier.predict(x_test)
     classifier.compile(optimizer='adam',loss='sparse_categorical_crossentropy')
     classifier.summary()
@@ -23,9 +41,10 @@ def train(tpu=False):
     if(tpu):
         classifier = convert_model_for_tpu(classifier)
 
-    classifier.fit(x=x_train,y=y_train,batch_size=1000,epochs=1, validation_data=(x_test,y_test))
+    classifier.fit(x=x_train,y=y_train,batch_size=50,epochs=20, validation_data=(x_test,y_test))
+    # import pdb; pdb.set_trace()  # breakpoint 396fe169 //
 
-    classifier.save('classifier.h5')
+    classifier.save_weights('classifier_weights.h5')
     print('done')
 
 def convert_model_for_tpu(model):
