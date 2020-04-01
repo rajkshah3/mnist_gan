@@ -41,11 +41,13 @@ def train(tpu=False):
     if(tpu):
         classifier = convert_model_for_tpu(classifier)
 
-    classifier.fit(x=x_train,y=y_train,batch_size=50,epochs=20, validation_data=(x_test,y_test))
+    classifier.fit(x=x_train,y=y_train,batch_size=1000,epochs=2, validation_data=(x_test,y_test))
     # import pdb; pdb.set_trace()  # breakpoint 396fe169 //
 
     classifier.save_weights('classifier_weights.h5')
     print('done')
+
+    return  classifier
 
 def convert_model_for_tpu(model):
     strategy = tf.contrib.tpu.TPUDistributionStrategy(
