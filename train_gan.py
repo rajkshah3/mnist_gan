@@ -1,3 +1,4 @@
+#gan training script
 from models import ResNet, Disciminator, Classifier
 import keras
 from keras.datasets import mnist
