@@ -1,7 +1,7 @@
 import keras
-from keras.regularizers import l2
+from keras.regularizers import l2,l1
 
-regularizer = l1(0.00001)
+regularizer = l1(0.0001)
 
 class Classifier(keras.Model):
     def __init__(self,backbone,num_classes):
