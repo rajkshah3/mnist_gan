@@ -58,17 +58,17 @@ class ResNet(keras.Model):
     def __init__(self,):
         super(ResNet, self).__init__(name='ResNet')
         #28,28
-        self.block1 = ResBlock(12,12,24)
-        self.block2 = ResBlock(12,12,24)
-        self.block3 = ResBlock(12,12,24)
+        self.block1 = ResBlock(16,16,32)
+        self.block2 = ResBlock(16,16,32)
+        self.block3 = ResBlock(16,16,32)
         #14,14
-        self.block4 = ResBlock(24,24,48,first_stride=2)
-        self.block5 = ResBlock(24,24,48)
-        self.block6 = ResBlock(24,24,48)
+        self.block4 = ResBlock(32,32,64,first_stride=2)
+        self.block5 = ResBlock(32,32,64)
+        self.block6 = ResBlock(32,32,64)
         #7,7
-        self.block7 = ResBlock(48,48,96,first_stride=2)
-        self.block8 = ResBlock(48,48,96)
-        self.block9 = ResBlock(48,48,96)
+        self.block7 = ResBlock(64,64,128,first_stride=2)
+        self.block8 = ResBlock(64,64,128)
+        self.block9 = ResBlock(64,64,128)
 
         # self.layers = [
         #                 self.block1,
