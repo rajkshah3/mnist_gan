@@ -59,7 +59,7 @@ def train(tpu=False):
 
     if(tpu):
         classifier = convert_model_for_tpu(classifier)
-    checkpoint = keras.callbacks.ModelCheckpoint('./checkpoints/classifier/', monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=True)
+    checkpoint = keras.callbacks.ModelCheckpoint('./checkpoints/classifier/classifier_{val_loss}.h5', monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=True)
     classifier.fit(x=x_train,y=y_train,batch_size=2000,epochs=10, validation_data=(x_vali,y_vali),callbacks=[checkpoint])
     # import pdb; pdb.set_trace()  # breakpoint 396fe169 //
     print('done')
