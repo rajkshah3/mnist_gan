@@ -42,6 +42,14 @@ def train(tpu=False):
     x_train = np.expand_dims(x_train,-1)
     x_test = np.expand_dims(x_test,-1)
 
+    x_train = x_train[:30000]
+    y_train = y_train[:30000]
+    x_vali  = x_train[30000:40000]
+    y_vali  = y_train[30000:40000]
+
+    x_disc  = x_train[40000:]
+    y_disc  = y_train[40000:]
+
     backbone = ResNet()
     discriminator = Disciminator(backbone)
     classifier = Classifier(backbone,10)
@@ -51,13 +59,15 @@ def train(tpu=False):
 
     if(tpu):
         classifier = convert_model_for_tpu(classifier)
-
-    classifier.fit(x=x_train,y=y_train,batch_size=500,epochs=10, validation_data=(x_test,y_test))
+    checkpoint = keras.callbacks.callbacks.ModelCheckpoint('./checkpoints/classifier/', monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=True)
+    classifier.fit(x=x_train,y=y_train,batch_size=2000,epochs=10, validation_data=(x_vali,y_vali),callbacks=[checkpoint])
     # import pdb; pdb.set_trace()  # breakpoint 396fe169 //
-
-    classifier.save_weights('classifier_weights.h5')
     print('done')
     return (classifier, x_test)
+
+def convert_classifier_to_discriminator(model):
+    backbone = model.get_backbone()
+    return Disciminator(backbone)
 
 def convert_model_for_tpu(model):
     strategy = tf.contrib.tpu.TPUDistributionStrategy(
