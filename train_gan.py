@@ -12,7 +12,7 @@ x_test = np.expand_dims(x_test,-1)
 backbone = ResNet()
 discriminator = Disciminator(backbone)
 classifier = Classifier(backbone,10)
-import pdb; pdb.set_trace()  # breakpoint 396fe169 //
+# import pdb; pdb.set_trace()  # breakpoint 396fe169 //
 classifier.predict(x_test)
 classifier.compile(optimizer='adam',loss='sparse_categorical_crossentropy')
 classifier.summary()
