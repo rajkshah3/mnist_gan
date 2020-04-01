@@ -46,13 +46,13 @@ def train(tpu=False):
     discriminator = Disciminator(backbone)
     classifier = Classifier(backbone,10)
     preds = classifier.predict(x_test)
-    classifier.compile(optimizer='adam',loss='sparse_categorical_crossentropy')
+    classifier.compile(optimizer='adam',loss='sparse_categorical_crossentropy',metrics=['accuracy'])
     classifier.summary()
 
     if(tpu):
         classifier = convert_model_for_tpu(classifier)
 
-    classifier.fit(x=x_train,y=y_train,batch_size=1000,epochs=2, validation_data=(x_test,y_test),metrics=['accuracy'])
+    classifier.fit(x=x_train,y=y_train,batch_size=1000,epochs=2, validation_data=(x_test,y_test))
     # import pdb; pdb.set_trace()  # breakpoint 396fe169 //
 
     classifier.save_weights('classifier_weights.h5')
