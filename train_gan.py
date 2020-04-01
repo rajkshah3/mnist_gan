@@ -48,8 +48,6 @@ def train(tpu=False):
     x_train = np.expand_dims(x_train,-1)
     x_test = np.expand_dims(x_test,-1)
 
-    import pdb; pdb.set_trace()  # breakpoint 19da6792 //
-
     x_vali  = x_train[40000:50000]
     y_vali  = y_train[40000:50000]
 
