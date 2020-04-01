@@ -109,9 +109,9 @@ class ResBlock(keras.Model):
         self.conv1 = keras.layers.Conv2D(filters=self.l1,kernel_size=(1,1),strides=(self.first_stride,self.first_stride),
             padding='same',input_shape=input_shape,activity_regularizer=regularizer)
         self.bn1   = keras.layers.BatchNormalization(axis=-1)
-        self.conv2 = keras.layers.Conv2D(filters=self.l2,kernel_size=(3,3),strides=(1,1),padding='same',activity_regularizer=regularizer)
+        self.conv2 = keras.layers.Conv2D(filters=self.l2,kernel_size=(3,3),strides=(1,1),padding='same')
         self.bn2   = keras.layers.BatchNormalization(axis=-1)
-        self.conv3 = keras.layers.Conv2D(filters=self.l3,kernel_size=(1,1),strides=(1,1),padding='same',activity_regularizer=regularizer)
+        self.conv3 = keras.layers.Conv2D(filters=self.l3,kernel_size=(1,1),strides=(1,1),padding='same')
         self.pool  = keras.layers.AveragePooling2D(pool_size=(2, 2), strides=None, padding='valid', data_format=None)
 
     def compute_output_shape(self,input_shape):
