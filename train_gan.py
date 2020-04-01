@@ -4,6 +4,7 @@ import keras
 from keras.datasets import mnist
 import numpy as np 
 import tensorflow as tf
+import os
 
 def train(tpu=False):
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -21,7 +22,7 @@ def train(tpu=False):
 
     if(tpu):
         classifier = convert_model_for_tpu(classifier)
-        
+
     classifier.fit(x=x_train,y=y_train,batch_size=1000,epochs=1, validation_data=(x_test,y_test))
 
     classifier.save('classifier.h5')
