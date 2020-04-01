@@ -11,7 +11,7 @@ def calc_averages(x):
     return averages
 
 def calc_stds(x):
-    stds = np.std(x,axis=0)
+    stds = np.std(x)
     return stds
 
 def normalise_inputs(x,averages,stds):
@@ -44,6 +44,8 @@ def train(tpu=False):
 
     x_train = normalise_inputs(x_train,averages,stds)
     x_test = normalise_inputs(x_test,averages,stds)
+
+    import pdb; pdb.set_trace()  # breakpoint ab4837e0 //
 
     x_train = np.expand_dims(x_train,-1)
     x_test = np.expand_dims(x_test,-1)
