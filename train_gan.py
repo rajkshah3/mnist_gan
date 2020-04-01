@@ -10,16 +10,16 @@ import os
 def train(tpu=False):
     # Detect hardware
     try:
-      tpu = tf.distribute.cluster_resolver.TPUClusterResolver() # TPU detection
+        tpu = tf.distribute.cluster_resolver.TPUClusterResolver() # TPU detection
     except ValueError: # If TPU not found
-      tpu = None
+        tpu = None
 
     if tpu:
-      tf.tpu.experimental.initialize_tpu_system(tpu)
-      strategy = tf.distribute.experimental.TPUStrategy(tpu, steps_per_run=128)
-      print('Running on TPU ', tpu.cluster_spec().as_dict()['worker'])  
+        tf.tpu.experimental.initialize_tpu_system(tpu)
+        strategy = tf.distribute.experimental.TPUStrategy(tpu, steps_per_run=128)
+        print('Running on TPU ', tpu.cluster_spec().as_dict()['worker'])  
     else:
-      strategy = tf.distribute.get_strategy() # Default strategy that works on CPU and single GPU
+        strategy = tf.distribute.get_strategy() # Default strategy that works on CPU and single GPU
         print('Running on CPU instead')
 
     scope = strategy.scope()
