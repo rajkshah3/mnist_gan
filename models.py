@@ -1,4 +1,7 @@
 import keras
+from keras.regularizers import l2
+
+regularizer = l2(0.001)
 
 class Classifier(keras.Model):
     def __init__(self,backbone,num_classes):
@@ -55,17 +58,17 @@ class ResNet(keras.Model):
     def __init__(self,):
         super(ResNet, self).__init__(name='ResNet')
         #28,28
-        self.block1 = ResBlock(24,24,48)
-        self.block2 = ResBlock(24,24,48)
-        self.block3 = ResBlock(24,24,48)
+        self.block1 = ResBlock(12,12,24)
+        self.block2 = ResBlock(12,12,24)
+        self.block3 = ResBlock(12,12,24)
         #14,14
-        self.block4 = ResBlock(48,48,96,first_stride=2)
-        self.block5 = ResBlock(48,48,96)
-        self.block6 = ResBlock(48,48,96)
+        self.block4 = ResBlock(24,24,48,first_stride=2)
+        self.block5 = ResBlock(24,24,48)
+        self.block6 = ResBlock(24,24,48)
         #7,7
-        self.block7 = ResBlock(96,96,192,first_stride=2)
-        self.block8 = ResBlock(96,96,192)
-        self.block9 = ResBlock(96,96,192)
+        self.block7 = ResBlock(48,48,96,first_stride=2)
+        self.block8 = ResBlock(48,48,96)
+        self.block9 = ResBlock(48,48,96)
 
         # self.layers = [
         #                 self.block1,
@@ -103,11 +106,12 @@ class ResBlock(keras.Model):
         self.l3 = l3
 
     def build(self, input_shape):
-        self.conv1 = keras.layers.Conv2D(filters=self.l1,kernel_size=(1,1),strides=(self.first_stride,self.first_stride),padding='same',input_shape=input_shape)
+        self.conv1 = keras.layers.Conv2D(filters=self.l1,kernel_size=(1,1),strides=(self.first_stride,self.first_stride),
+            padding='same',input_shape=input_shape,regularizer=regularizer)
         self.bn1   = keras.layers.BatchNormalization(axis=-1)
-        self.conv2 = keras.layers.Conv2D(filters=self.l2,kernel_size=(3,3),strides=(1,1),padding='same')
+        self.conv2 = keras.layers.Conv2D(filters=self.l2,kernel_size=(3,3),strides=(1,1),padding='same',regularizer=regularizer)
         self.bn2   = keras.layers.BatchNormalization(axis=-1)
-        self.conv3 = keras.layers.Conv2D(filters=self.l3,kernel_size=(1,1),strides=(1,1),padding='same')
+        self.conv3 = keras.layers.Conv2D(filters=self.l3,kernel_size=(1,1),strides=(1,1),padding='same',regularizer=regularizer)
         self.pool  = keras.layers.AveragePooling2D(pool_size=(2, 2), strides=None, padding='valid', data_format=None)
 
     def compute_output_shape(self,input_shape):
