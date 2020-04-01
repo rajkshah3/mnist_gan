@@ -10,8 +10,12 @@ def calc_averages(x):
     averages = np.average(x,axis=0)
     return averages
 
-def normalise_inputs(x,averages):
-    x = [a - averages for a in x]
+def calc_stds(x):
+    stds = np.std(x,axis=0)
+    return stds
+
+def normalise_inputs(x,averages,stds):
+    x = [np.divide(a - averages,stds) for a in x]
     return np.array(x)
 
 def train(tpu=False):
@@ -36,8 +40,10 @@ def train(tpu=False):
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
     averages = calc_averages(x_train)
-    x_train = normalise_inputs(x_train,averages)
-    x_test = normalise_inputs(x_test,averages)
+    stds = calc_stds(x_train)
+
+    x_train = normalise_inputs(x_train,averages,stds)
+    x_test = normalise_inputs(x_test,averages,stds)
 
     x_train = np.expand_dims(x_train,-1)
     x_test = np.expand_dims(x_test,-1)
@@ -61,7 +67,8 @@ def train(tpu=False):
     if(tpu):
         classifier = convert_model_for_tpu(classifier)
     checkpoint = keras.callbacks.ModelCheckpoint('./checkpoints/classifier/classifier_{epoch:.2f}.h5', monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=True)
-    classifier.fit(x=x_train,y=y_train,batch_size=6000,epochs=30, validation_data=(x_vali,y_vali),callbacks=[checkpoint])
+    classifier.fit(x=x_train,y=y_train,batch_size=6000,epochs=1, validation_data=(x_vali,y_vali),callbacks=[checkpoint])
+    # classifier.fit(x=x_train,y=y_train,batch_size=6000,epochs=30, validation_data=(x_vali,y_vali),callbacks=[checkpoint])
     # import pdb; pdb.set_trace()  # breakpoint 396fe169 //
     print('done')
     return (classifier, x_test)
