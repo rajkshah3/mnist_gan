@@ -3,8 +3,9 @@ from models import ResNet, Disciminator, Classifier
 import keras
 from keras.datasets import mnist
 import numpy as np 
+import tensorflow as tf
 
-def train():
+def train(tpu=False):
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
     x_train = np.expand_dims(x_train,-1)
@@ -18,10 +19,19 @@ def train():
     classifier.compile(optimizer='adam',loss='sparse_categorical_crossentropy')
     classifier.summary()
 
+    if(tpu):
+        classifier = tf.contrib.tpu.keras_to_tpu_model(classifier)
+
     classifier.fit(x=x_train,y=y_train,batch_size=1000,epochs=1, validation_data=(x_test,y_test))
 
     classifier.save('classifier.h5')
     print('done')
+
+def convert_model_for_tpu(model):
+    strategy = tf.contrib.tpu.TPUDistributionStrategy(
+        tf.contrib.cluster_resolver.TPUClusterResolver(
+            tpu='grpc://'+os.environ['COLAB_TPU_ADDR']))
+    return tf.contrib.tpu.keras_to_tpu_model(model,strategy=strategy)
 
 if __name__ == '__main__':
     train()
