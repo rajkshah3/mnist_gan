@@ -1,7 +1,274 @@
-import keras
-from keras.regularizers import l2,l1
+#Change keras models to layers!
+
+import tensorflow.keras as keras
+from tensorflow.keras.regularizers import l2,l1
+import os
+import numpy as np 
+from tensorflow.keras.datasets import mnist
+import tensorflow as tf
 
 regularizer = None #l2(0.001)
+
+def calc_averages(x):
+    averages = np.average(x,axis=0)
+    return averages
+
+def calc_stds(x):
+    stds = np.std(x)
+    return stds
+
+def fix_weights(self,model):
+    for layer in model.layers:
+        layer.trainable = False
+
+def unfix_weights(self,model):
+    for layer in model.layers:
+        layer.trainable = False
+
+class mnist_data():
+    def __init__(self):
+        (x_train, self.y_train), (x_test, self.y_test) = mnist.load_data()
+
+        self.averages = calc_averages(x_train)
+        self.stds = calc_stds(x_train)
+
+        self.x_train = self.normalise_inputs(x_train)
+        self.x_test = self.normalise_inputs(x_test)
+
+        self.x_train = np.expand_dims(self.x_train,-1)
+        self.x_test = np.expand_dims(self.x_test,-1)
+
+        self.x_vali  = self.x_train[40000:50000]
+        self.y_vali  = self.y_train[40000:50000]
+
+        self.x_disc  = self.x_train[50000:]
+        self.y_disc  = self.y_train[50000:]
+
+        self.x_train = self.x_train[:40000]
+        self.y_train = self.y_train[:40000]
+
+    def get_vali(self):
+        return self.x_vali, self.y_vali
+
+    def get_train(self):
+        return self.x_train, self.y_train
+
+    def get_debug(self):
+        return self.x_train[:10], self.y_train[:10]
+
+    def get_n_samples(self,n):
+        return self.x_train[:n], self.y_train[:n]
+
+    def get_test(self):
+        return self.x_test, self.y_test
+
+    def normalise_inputs(self,x):
+        x = [np.divide(a - self.averages,self.stds) for a in x]
+        return np.array(x)
+
+    def reverse_normalisation(self,x):
+        x = np.squeeze(x)
+        x = [np.multiply(a,self.stds) + self.averages for a in x]
+        return np.array(x,dtype=int)
+
+class GAN(keras.Model):
+    def __init__(self,generator,discriminator):
+        super(GAN, self).__init__(name='GAN')
+        self.generator = generator
+        self.discriminator = discriminator
+
+    def set_mode_to_generate(self):
+        self.generator.trainable = False
+        self.discriminator.trainable = True
+
+    def set_mode_to_discriminate(self):
+        self.generator.trainable = True
+        self.discriminator.trainable = False
+
+    def get_generator(self):
+        return self.generator
+
+    def get_discriminator(self):
+        return self.discriminator
+
+    def compute_output_shape(self,input_shape):
+        return self.discriminator.compute_output_shape(input_shape)
+
+    def select_candidates_from_examples(self,candidates,examples,real_or_generated):
+
+        # real_or_generated = keras.backend.expand_dims(real_or_generated,1)
+        # cands = keras.backend.reshape(candidates,(-1,*examples.shape[1:]))
+        # real_or_generated = tf.broadcast_to(real_or_generated,(-1,*examples.shape[1:]))  
+        # exgs = examples * real_or_generated
+        one_minus_real_or_generated = tf.ones_like(real_or_generated) - real_or_generated
+
+        #Manually Broadcast and multiplication implementation (probably faster but inelegant)
+        #Outputs of code tested against einsum calculations
+
+        # real_or_generated_broadcasted = real_or_generated
+        # while len(real_or_generated_broadcasted.shape) < len(examples.shape):
+        #     real_or_generated_broadcasted = tf.expand_dims(real_or_generated_broadcasted,-1)
+
+        # for ni, i in enumerate(examples.shape[1:]):
+        #     real_or_generated_broadcasted = tf.keras.backend.repeat_elements(real_or_generated_broadcasted,i,axis=ni+1)
+
+        
+
+
+        #Broadcast with tf tile instead
+        # real_or_generated_broadcasted = tf.reshape(tf.tile(real_or_generated,[1,np.product(examples.shape[1:])]),(-1,*examples.shape[1:]))
+        # one_minus_real_or_generated_broadcasted = tf.ones_like(real_or_generated_broadcasted) - real_or_generated_broadcasted
+
+        # #Broadcast calculation
+        # exgs = examples * real_or_generated_broadcasted
+        # cands = candidates * one_minus_real_or_generated_broadcasted
+
+        #Einsum implementation
+        exgs = tf.einsum('abcd,ad->abcd',examples,real_or_generated)
+        cands = tf.einsum('abcd,ad->abcd',candidates,one_minus_real_or_generated)
+        return exgs + cands
+
+    def call(self,inputs):
+        noise = inputs[0]
+        examples = inputs[1]
+        real_or_generated =  inputs[2]
+        candidates = self.generator(noise)
+        inputs_for_discriminator = self.select_candidates_from_examples(candidates,examples,real_or_generated)
+        outputs = self.discriminator(inputs_for_discriminator)
+        return outputs
+
+class ResGen(keras.layers.Layer):
+    def __init__(self,backbone):
+        super(ResGen, self).__init__(name='ResGen')
+        #28,28
+        self.backbone = backbone
+        self.upsample   = keras.layers.UpSampling2D(size=(2, 2),interpolation='nearest')
+        resnet_input_shape = self.backbone.block9.get_input_shape()
+        self.c1     = keras.layers.Conv2D(resnet_input_shape[-1],padding='same',
+            kernel_size=(2,2))
+        self.block9 = self.backbone.block9
+        self.block8 = self.backbone.block8
+
+        block6_input = self.backbone.block6.get_input_shape()
+        self.comb_conv1 = keras.layers.Conv2D(block6_input[-1],padding='same',kernel_size=(2,2))
+
+        self.block6 = self.backbone.block6
+        self.block5 = self.backbone.block5
+
+        block3_input = self.backbone.block3.get_input_shape()
+        self.comb_conv2 = keras.layers.Conv2D(block3_input[-1],padding='same',kernel_size=(2,2))
+
+        self.block3 = self.backbone.block3
+        self.block2 = self.backbone.block2
+        self.conv_out = keras.layers.Conv2D(1,padding='same',
+            kernel_size=(1,1))
+        self.model_input_shape = resnet_input_shape[:-1]
+        # self.model_output_shape = self.block2.output_shape[:-1]
+
+    def get_input_shape(self):
+        return self.model_input_shape
+
+    def compute_output_shape(self,input_shape):
+        return self.get_output_shape()
+
+    def set_layers_from_backbone(self):
+        self.block9 = self.backbone.block9
+        self.block8 = self.backbone.block8
+
+        self.block6 = self.backbone.block6
+        self.block5 = self.backbone.block5
+
+        self.block3 = self.backbone.block3
+        self.block2 = self.backbone.block2
+
+    def fix_backbone_weights(self):
+        self.backbone.trainable = False
+
+    def unfix_backbone_weights(self):
+        self.backbone.trainable = True
+
+    def set_backbone(self,backbone):
+        self.backbone = backbone
+        self.set_layers_from_backbone()
+
+    def get_output_shape(self):
+        return self.conv_out.output_shape
+
+    def call(self,inputs):
+        x = self.c1(inputs)
+        x = self.block9(x)
+        x = self.block8(x)
+        x = self.comb_conv1(x)
+        x = self.upsample(x)
+        x = self.block6(x)
+        x = self.block5(x)
+        x = self.comb_conv2(x)
+        x = self.upsample(x)
+        x = self.block3(x)
+        x = self.block2(x)
+        x = self.conv_out(x)
+        return x
+
+class Unet(keras.layers.Layer):
+    def __init__(self,backbone=None):
+        super(Unet, self).__init__(name='Unet')
+        #28,28
+        self.backbone = backbone
+        self.block1 = ResBlock(16,16,32)
+        #14,14
+        self.block2 = ResBlock(32,32,64,first_stride=2)     # Use bigger_stride, or downsample
+        #7,7
+        self.block3 = ResBlock(64,64,128,first_stride=2)    # Use bigger_stride, or downsample
+
+        self.block_up_1 = ResBlock(16,16,128)
+        self.upsample   = keras.layers.UpSampling2D(size=(2, 2),interpolation='nearest')
+        self.block_up_2 = ResBlock(32,32,192) # 128 + 64 final filters required for output
+        self.block_up_3 = ResBlock(64,64,224) # 192 + 32
+        self.concat     = keras.layers.Concatenate()
+
+    def get_input_shape(self):
+        return self.block1.get_input_shape
+    
+    def fix_backbone_weights(self):
+        self.backbone.trainable = False
+
+    def unfix_backbone_weights(self):
+        self.backbone.trainable = True
+
+    def get_output_shape(self):
+        return self.block_up_3.get_output_shape
+
+    def get_backbone(self):
+        return self.backbone
+
+    def set_layers_from_backbone(self):
+        pass
+
+    def set_backbone(self,backbone):
+        self.backbone = backbone
+        self.set_layers_from_backbone()
+
+    def call(self,inputs):
+        x_out1 = self.block1(inputs)
+        x_out2 = self.block2(x_out1)
+        x_out3 = self.block3(x_out2)
+
+        up1  = self.block_up_1(x_out3)
+
+        up2_input  = self.upsample(up1)
+        up2_input  = self.concat([x_out2,up2_input])
+        # import pdb; pdb.set_trace()  # breakpoint 4e2c710f //
+
+        up2_output = self.block_up_2(up2_input)
+
+        up3_input  = self.upsample(up2_output)
+        up3_input  = self.concat([x_out1,up3_input])
+        
+
+        up3_output = self.block_up_3(up3_input)
+        
+        return up3_output
+
 
 class Classifier(keras.Model):
     def __init__(self,backbone,num_classes):
@@ -29,16 +296,24 @@ class Classifier(keras.Model):
     def compute_output_shape(self,input_shape):
         return self.num_classes
 
+    def fix_backbone_weights(self):
+        self.backbone.trainable = False
 
-class Disciminator(keras.Model):
+    def unfix_backbone_weights(self):
+        self.backbone.trainable = True
+
+class Discriminator(keras.layers.Layer):
     def __init__(self,backbone):
-        super(Disciminator, self).__init__(name='Disciminator')
+        super(Discriminator, self).__init__(name='Discriminator')
         #28,28
         self.backbone = backbone
+
+    def build(self,input_shape):
         self.flatten = keras.layers.Flatten()
         self.init = keras.initializers.VarianceScaling(scale=1.0, mode='fan_in', distribution='normal', seed=None)
         self.classifier_layer = keras.layers.Dense(1,activation='sigmoid',kernel_initializer=self.init)
-    
+        super(Discriminator, self).build(input_shape)
+
     def get_backbone(self):
         return self.backbone
 
@@ -53,39 +328,36 @@ class Disciminator(keras.Model):
     def compute_output_shape(self,input_shape):
         return (1)
 
+    def fix_backbone_weights(self):
+        self.backbone.trainable = False
 
-class ResNet(keras.Model):
+    def unfix_backbone_weights(self):
+        self.backbone.trainable = True
+
+class ResNet(keras.layers.Layer):
     def __init__(self,):
         super(ResNet, self).__init__(name='ResNet')
         #28,28
-        self.block1 = ResBlock(16,16,32)
-        self.block2 = ResBlock(16,16,32)
-        self.block3 = ResBlock(16,16,32)
-        #14,14
-        self.block4 = ResBlock(32,32,64,first_stride=2)
-        self.block5 = ResBlock(32,32,64)
-        self.block6 = ResBlock(32,32,64)
-        #7,7
-        self.block7 = ResBlock(64,64,128,first_stride=2)
-        self.block8 = ResBlock(64,64,128)
-        self.block9 = ResBlock(64,64,128)
 
-        # self.layers = [
-        #                 self.block1,
-        #                 self.block2,
-        #                 self.block3,
-        #                 self.block4,
-        #                 self.block5,
-        #                 self.block6,
-        #                 self.block7,
-        #                 self.block8,
-        #                 self.block9,
-        #             ]
+    def build(self,input_shape):
+        self.block1 = ResBlock(16,16,32,name='block1')
+        self.block2 = ResBlock(16,16,32,name='block2')
+        self.block3 = ResBlock(16,16,32,name='block3')
+        #14,14
+        self.block4 = ResBlock(32,32,64,first_stride=2,name='block4')
+        self.block5 = ResBlock(32,32,64,name='block5')
+        self.block6 = ResBlock(32,32,64,name='block6')
+        #7,7
+        self.block7 = ResBlock(64,64,128,first_stride=2,name='block7')
+        self.block8 = ResBlock(64,64,128,name='block8')
+        self.block9 = ResBlock(64,64,128,name='block9')
+        super(ResNet, self).build(input_shape)
 
     def compute_output_shape(self,input_shape):
         return self.block9.output_shape
 
     def call(self, inputs):
+        # import pdb; pdb.set_trace()  # breakpoint c5203db7 //
         x = self.block1(inputs)
         x = self.block2(x)
         x = self.block3(x)
@@ -97,15 +369,17 @@ class ResNet(keras.Model):
         x = self.block9(x)
         return x
 
-class ResBlock(keras.Model):
-    def __init__(self, l1=64,l2=64,l3=256,first_stride=1):
-        super(ResBlock, self).__init__(name='ResBlock')
+class ResBlock(keras.layers.Layer):
+    def __init__(self, l1=64,l2=64,l3=256,first_stride=1,name=None):
+        super(ResBlock, self).__init__(name='Resblock_{}_{}_{}_{}'.format(l1,l2,l3,name))
+        # self.name = 'Resblock_{}_{}_{}_{}'.format(l1,l2,l3,name)
         self.first_stride = first_stride
         self.l1 = l1
         self.l2 = l2
         self.l3 = l3
-
+        self.iinput_shape = None
     def build(self, input_shape):
+        # self.input_shape = input_shape
         self.conv1 = keras.layers.Conv2D(filters=self.l1,kernel_size=(1,1),strides=(self.first_stride,self.first_stride),
             padding='same',input_shape=input_shape,activity_regularizer=regularizer)
         self.bn1   = keras.layers.BatchNormalization(axis=-1)
@@ -113,11 +387,22 @@ class ResBlock(keras.Model):
         self.bn2   = keras.layers.BatchNormalization(axis=-1)
         self.conv3 = keras.layers.Conv2D(filters=self.l3,kernel_size=(1,1),strides=(1,1),padding='same')
         self.pool  = keras.layers.AveragePooling2D(pool_size=(2, 2), strides=None, padding='valid', data_format=None)
+        super(ResBlock, self).build(input_shape)
+        self.iinput_shape = input_shape
+    def get_input_shape(self,):
+        try:
+            return self.input_shape
+        except:
+            if(self.iinput_shape):
+                return self.iinput_shape
+            else:
+                print(self.name+' has no defined input shape!')
 
     def compute_output_shape(self,input_shape):
         return self.conv3.output_shape
 
     def call(self, inputs):
+        # import pdb; pdb.set_trace()  # breakpoint fba01bec //
         x = keras.activations.relu(self.bn1(self.conv1(inputs)))
         x = keras.activations.relu(self.bn2(self.conv2(x)))
         if(self.first_stride == 1):
