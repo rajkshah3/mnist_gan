@@ -55,7 +55,12 @@ def load_generator(backbone_data=None,generator_weights='generator_weights.h5',b
 
     return generator
 
-def load_gan(backbone_data=None,gan_weights='gan_weights.h5',backbone_weights='backbone_posttrained_weights.h5',clear_session=True):
+def load_gan(backbone_data=None,gan_weights='gan_weights.h5',
+    backbone_weights='backbone_posttrained_weights.h5',
+    generator_weights=None,
+    discriminator_weights='None',
+    clear_session=True):
+
     if(clear_session):
         keras.backend.clear_session()
     
@@ -63,8 +68,8 @@ def load_gan(backbone_data=None,gan_weights='gan_weights.h5',backbone_weights='b
     backbone(backbone_data.get_test()[0])
     # generator = ResGen(backbone)
 
-    discriminator = load_discriminator(data=backbone_data,clear_session=False,backbone_weights=backbone_weights,discriminator_weights=None)
-    generator     = load_generator(backbone_data=backbone_data,clear_session=False,backbone_weights=backbone_weights,generator_weights=None)
+    discriminator = load_discriminator(data=backbone_data,clear_session=False,backbone_weights=backbone_weights,discriminator_weights=discriminator_weights)
+    generator     = load_generator(backbone_data=backbone_data,clear_session=False,backbone_weights=backbone_weights,generator_weights=generator_weights)
 
     # x = discriminator(inp)
     # x = generator(x)
@@ -168,24 +173,30 @@ def test_unet():
 def test_gan():
     data = mnist_data()
 
-    gan = load_gan(backbone_data=data,gan_weights=None,backbone_weights=None,clear_session=True)
+    gan = load_gan(backbone_data=data,gan_weights=None,backbone_weights='backbone_trained_weights.npy',generator_weights=None,discriminator_weights= None,clear_session=True)
 
     generator = gan.get_generator()
     input_shape   = generator.get_input_shape()
 
-    rand_data_shape = ((32,) + input_shape[1:] + (1,))
-    random_noise_data = np.random.normal(size=rand_data_shape)
     # discriminator = gan.get_discriminator()
 
-    actuals = np.ones(32)
-    images = data.get_n_samples(32)[0]
+    images = data.get_n_samples(100)[0]
+    actuals = np.random.randint(0, 1,size=images.shape[0])
+
+    rand_data_shape = ((images.shape[0],) + input_shape[1:] + (1,))
+    random_noise_data = np.random.normal(size=rand_data_shape)
+    
     outputs = gan.predict([random_noise_data,images,actuals],batch_size=12)
+    # gan.train()
     # outputs = gan.predict(random_noise_data,batch_size=32)
-    import pdb; pdb.set_trace()  # breakpoint 31b8b809 //
+    gan.set_mode_to_discriminate()
+    gan.fit(x=[random_noise_data[:100],images[:100],actuals[:100]],y=actuals[:100],batch_size=6000,epochs=1, validation_data=data.get_vali(),callbacks=[checkpoint])
+
+    gan.save_weights('gan_weights.h5')
 
     return True
 
-def train_classifier(tpu=False):
+def train_classifier_depricated(tpu=False):
 
     scope = strategy.scope()
 
@@ -202,11 +213,11 @@ def train_classifier(tpu=False):
     classifier.summary()
 
     if(tpu):
-        classifier = convert_model_for_tpu(classifier)
+       classifier = convert_model_for_tpu(classifier)
 
     checkpoint = keras.callbacks.ModelCheckpoint('./checkpoints/classifier/classifier_{epoch:.2f}.h5', monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=True)
     # classifier.fit(x=x_train,y=y_train,batch_size=6000,epochs=1, validation_data=(x_vali,y_vali),callbacks=[checkpoint])
-    classifier.fit(x=data.get_train()[0],y=data.get_train()[1],batch_size=6000,epochs=1, validation_data=data.get_vali(),callbacks=[checkpoint])
+    classifier.fit(x=data.get_n_samples(100)[0],y=data.get_n_samples(100)[1],batch_size=6000,epochs=1, validation_data=data.get_vali(),callbacks=[checkpoint])
     # import pdb; pdb.set_trace()  # breakpoint 396fe169 //
     backbone =  classifier.get_backbone()
     backbone.save_weights('backbone_weights.h5')
@@ -225,11 +236,16 @@ def convert_model_for_tpu(model):
 def train_classifier():
     data = mnist_data()
 
-    classifier = load_classifier(data=data,classes=10,generator_weights=None,backbone_weights=None)
+    classifier = load_classifier(data=data,classes=10,classifier_weights=None,backbone_weights=None)
     
     classifier.compile(optimizer='adam',loss='sparse_categorical_crossentropy',metrics=['accuracy'])
+    classifier.predict(data.get_test_data()[0])
     classifier.summary()
+    classifier.fit(x=data.get_n_samples(100)[0],y=data.get_n_samples(100)[1],batch_size=6000,epochs=1, validation_data=data.get_vali())
 
+
+    backbone = classifier.get_backbone()
+    backbone.save_weights('backbone_trained_weights.npy')
 
 if __name__ == '__main__':
     tf.random.set_seed(
@@ -239,4 +255,5 @@ if __name__ == '__main__':
     # train()
     # test_resgen()
     # test_unet()
+    train_classifier()
     test_gan()

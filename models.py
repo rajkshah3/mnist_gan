@@ -25,6 +25,23 @@ def unfix_weights(self,model):
     for layer in model.layers:
         layer.trainable = False
 
+class ModelFromLayer(keras.Model):
+    def __init__(self,layer):
+        super(ModelFromLayer, self).__init__(name='ModelFromLayer')
+        self.layer = layer
+
+    def call(self,input):
+        return self.layer(input)
+
+class LayerABC(keras.layers.Layer):
+    def load_weights(self,weights_file):
+        weights = np.load(weights_file,allow_pickle=True)
+        self.set_weights(weights)
+
+    def save_weights(self,weights_file):
+        weights = self.get_weights()
+        np.save(weights_file,weights,allow_pickle=True)
+
 class mnist_data():
     def __init__(self):
         (x_train, self.y_train), (x_test, self.y_test) = mnist.load_data()
@@ -137,7 +154,7 @@ class GAN(keras.Model):
         outputs = self.discriminator(inputs_for_discriminator)
         return outputs
 
-class ResGen(keras.layers.Layer):
+class ResGen(LayerABC):
     def __init__(self,backbone):
         super(ResGen, self).__init__(name='ResGen')
         #28,28
@@ -209,7 +226,7 @@ class ResGen(keras.layers.Layer):
         x = self.conv_out(x)
         return x
 
-class Unet(keras.layers.Layer):
+class Unet(LayerABC):
     def __init__(self,backbone=None):
         super(Unet, self).__init__(name='Unet')
         #28,28
@@ -302,7 +319,7 @@ class Classifier(keras.Model):
     def unfix_backbone_weights(self):
         self.backbone.trainable = True
 
-class Discriminator(keras.layers.Layer):
+class Discriminator(LayerABC):
     def __init__(self,backbone):
         super(Discriminator, self).__init__(name='Discriminator')
         #28,28
@@ -334,7 +351,7 @@ class Discriminator(keras.layers.Layer):
     def unfix_backbone_weights(self):
         self.backbone.trainable = True
 
-class ResNet(keras.layers.Layer):
+class ResNet(LayerABC):
     def __init__(self,):
         super(ResNet, self).__init__(name='ResNet')
         #28,28
@@ -369,7 +386,7 @@ class ResNet(keras.layers.Layer):
         x = self.block9(x)
         return x
 
-class ResBlock(keras.layers.Layer):
+class ResBlock(LayerABC):
     def __init__(self, l1=64,l2=64,l3=256,first_stride=1,name=None):
         super(ResBlock, self).__init__(name='Resblock_{}_{}_{}_{}'.format(l1,l2,l3,name))
         # self.name = 'Resblock_{}_{}_{}_{}'.format(l1,l2,l3,name)
