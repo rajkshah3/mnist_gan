@@ -38,7 +38,7 @@ def get_n_random_inputs_for_gan(n,input_shape):
 
 def generator_loss(y_true, y_pred, sample_weight=None):
     y_true = tf.ones_like(y_true) - y_true
-    return bce(y_true,y_pred,sample_weight)
+    return bce(y_true,y_pred,sample_weight=y_true)
 
 def discriminator_loss(y_true, y_pred, sample_weight=None):
     return bce(y_true,y_pred,sample_weight)
