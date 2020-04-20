@@ -78,8 +78,8 @@ class mnist_data():
 
     def get_randn_samples(self,n):
         randints = np.random.randint(0,len(x_train)+1,n)
-        x = [x_train[i] for i in randints]
-        y = [y_train[i] for i in randints]
+        x = [self.x_train[i] for i in randints]
+        y = [self.y_train[i] for i in randints]
         return x, y
 
     def get_test(self):
