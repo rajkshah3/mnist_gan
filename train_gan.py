@@ -37,6 +37,7 @@ def get_n_random_inputs_for_gan(n,input_shape):
     return random_noise_data
 
 def generator_loss(y_true, y_pred, sample_weight=None):
+    # y_true are the actual images 
     y_true = tf.ones_like(y_true) - y_true
     return bce(y_true,y_pred,sample_weight=y_true)
 
@@ -159,7 +160,7 @@ def test_coupled_weights_of_backbone():
     classifier.compile(optimizer='adam',loss='sparse_categorical_crossentropy',metrics=['accuracy'])
     classifier.summary()
     # classifier.fit(x=x_train,y=y_train,batch_size=6000,epochs=1, validation_data=(x_vali,y_vali),callbacks=[checkpoint])
-    classifier.fit(x=data.get_train()[0],y=data.get_train()[1],batch_size=6000,epochs=1, validation_data=data.get_vali())
+    classifier.fit(x=data.get_n_samples(35)[0],y=data.get_n_samples(35)[1],batch_size=6000,epochs=1, validation_data=data.get_vali())
 
 
     discriminator_predicitons_2 = discriminator(data.get_test()[0])    
@@ -196,7 +197,7 @@ def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_bat
     input_shape   = generator.get_input_shape()
 
     # discriminator = gan.get_discriminator()
-    images = data.get_train()[0]
+    images = data.get_n_samples(35)[0]
 
     train_data_x, train_data_y = get_gan_data(images,input_shape)
     validation_data_x, validation_data_y = get_gan_data(data.get_vali()[0],input_shape)
@@ -222,10 +223,7 @@ def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_bat
             batch_size = dis_batch_size
 
         gan.fit(x=train_data_x,y=train_data_y,batch_size=batch_size,epochs=epochs, validation_data=(validation_data_x, validation_data_y),callbacks=[])
-        
-
-
-    gan.save_weights('gan_weights.h5')
+        gan.save_weights('gan_weights.h5')
 
     rand_test_data = get_n_random_inputs_for_gan(10,input_shape)
     test_images  = generator(rand_test_data)
@@ -255,7 +253,7 @@ def train_classifier_depricated(tpu=False):
 
     checkpoint = keras.callbacks.ModelCheckpoint('./checkpoints/classifier/classifier_{epoch:.2f}.h5', monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=True)
     # classifier.fit(x=x_train,y=y_train,batch_size=6000,epochs=1, validation_data=(x_vali,y_vali),callbacks=[checkpoint])
-    classifier.fit(x=data.get_train()[0],y=data.get_train()[1],batch_size=6000,epochs=20, validation_data=data.get_vali(),callbacks=[checkpoint])
+    classifier.fit(x=data.get_n_samples(35)[0],y=data.get_n_samples(35)[1],batch_size=6000,epochs=20, validation_data=data.get_vali(),callbacks=[checkpoint])
     # import pdb; pdb.set_trace()  # breakpoint 396fe169 //
     backbone =  classifier.get_backbone()
     backbone.save_weights('backbone_weights.h5')
@@ -279,7 +277,7 @@ def train_classifier(epochs=5):
     classifier.compile(optimizer='adam',loss='sparse_categorical_crossentropy',metrics=['accuracy'])
     classifier.predict(data.get_test()[0])
     classifier.summary()
-    classifier.fit(x=data.get_train()[0],y=data.get_train()[1],batch_size=1000,epochs=epochs, validation_data=data.get_vali())
+    classifier.fit(x=data.get_n_samples(35)[0],y=data.get_n_samples(35)[1],batch_size=1000,epochs=epochs, validation_data=data.get_vali())
 
 
     backbone = classifier.get_backbone()
@@ -294,6 +292,6 @@ if __name__ == '__main__':
     # test_resgen()
     # test_unet()
     # train_classifier()
-    test_gan()
-    test_gan(generate=True,gan_weights='gan_weights.h5')
-    test_gan(generate=True,gan_weights='gan_weights.h5')
+    # test_gan()
+    test_gan(generate=True,gan_weights='gan_weights.h5',training_steps=3,epochs=3)
+    # test_gan(generate=True,gan_weights='gan_weights.h5')
