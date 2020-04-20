@@ -187,7 +187,7 @@ def test_unet():
     preds = gen.predict(random_noise_data)
     return True
 
-def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_batch_size=200,dis_batch_size=1000):
+def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_batch_size=300,dis_batch_size=1000,train_images=3000):
     data = mnist_data()
 
     gan = load_gan(backbone_data=data,gan_weights=gan_weights,backbone_weights='backbone_trained_weights.npy',
@@ -200,14 +200,16 @@ def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_bat
     images = data.get_n_samples(35)[0]
 
     train_data_x, train_data_y = get_gan_data(images,input_shape)
-    validation_data_x, validation_data_y = get_gan_data(data.get_vali()[0],input_shape)
     # validation_data_x, validation_data_y = get_gan_data(data.get_n_samples(200)[0],input_shape)
-    
+    validation_data_x, validation_data_y = get_gan_data(data.get_vali()[0],input_shape)
+
 
     outputs = gan.predict(train_data_x,batch_size=12)
     # gan.train()
     # outputs = gan.predict(random_noise_data,batch_size=32)
     for i in range(training_steps):
+        images = data.get_randn_samples(train_images)[0]
+        train_data_x, train_data_y = get_gan_data(images,input_shape)
 
         if(generate):
             print('training Generator')
