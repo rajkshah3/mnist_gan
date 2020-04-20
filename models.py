@@ -96,13 +96,13 @@ class GAN(keras.Model):
         self.set_mode_to_discriminate()
 
     def set_mode_to_generate(self):
-        self.generator.trainable = False
-        self.discriminator.trainable = True
+        self.generator.trainable = True
+        self.discriminator.trainable = False
         self.generate_mode = True
 
     def set_mode_to_discriminate(self):
-        self.generator.trainable = True
-        self.discriminator.trainable = False
+        self.generator.trainable = False
+        self.discriminator.trainable = True
         self.generate_mode = False
 
     def get_generator(self):
@@ -111,7 +111,7 @@ class GAN(keras.Model):
     def get_discriminator(self):
         return self.discriminator
 
-    def save_weights(self):
+    def save_weights(self,name):
         swapped = False
         if(self.generate_mode):
             self.set_mode_to_discriminate()

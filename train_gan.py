@@ -186,7 +186,7 @@ def test_unet():
     preds = gen.predict(random_noise_data)
     return True
 
-def test_gan(generated=False,gan_weights=None):
+def test_gan(generate=False,gan_weights=None,epochs=20):
     data = mnist_data()
 
     gan = load_gan(backbone_data=data,gan_weights=gan_weights,backbone_weights='backbone_trained_weights.npy',
@@ -196,28 +196,29 @@ def test_gan(generated=False,gan_weights=None):
     input_shape   = generator.get_input_shape()
 
     # discriminator = gan.get_discriminator()
-    images = data.get_n_samples(100)[0]
+    images = data.get_train()[0]
 
     train_data_x, train_data_y = get_gan_data(images,input_shape)
-    validation_data_x, validation_data_y = get_gan_data(data.get_vali()[0])
+    validation_data_x, validation_data_y = get_gan_data(data.get_vali()[0],input_shape)
+    # validation_data_x, validation_data_y = get_gan_data(data.get_n_samples(200)[0],input_shape)
     
 
     outputs = gan.predict(train_data_x,batch_size=12)
     # gan.train()
     # outputs = gan.predict(random_noise_data,batch_size=32)
-    if(generated):
+    if(generate):
         gan.set_mode_to_generate()
         gan.compile(optimizer='adam',loss=generator_loss,metrics=['accuracy',generator_loss,discriminator_loss])
     else:
         gan.set_mode_to_discriminate()
         gan.compile(optimizer='adam',loss=discriminator_loss,metrics=['accuracy',generator_loss,discriminator_loss])
 
-    gan.fit(x=train_data_x,y=train_data_y,batch_size=6000,epochs=5, validation_data=(validation_data_x, validation_data_y),callbacks=[])
+    gan.fit(x=train_data_x,y=train_data_y,batch_size=1000,epochs=epochs, validation_data=(validation_data_x, validation_data_y),callbacks=[])
 
 
     gan.save_weights('gan_weights.h5')
 
-    rand_test_data = get_n_random_inputs(10)
+    rand_test_data = get_n_random_inputs_for_gan(10,input_shape)
     test_images  = generator(rand_test_data)
     train_images = generator(train_data_x[0][:10])
 
@@ -283,5 +284,7 @@ if __name__ == '__main__':
     # train()
     # test_resgen()
     # test_unet()
-    # train_classifier()
+    train_classifier()
     test_gan()
+    test_gan(generate=True,gan_weights='gan_weights.h5')
+    test_gan(generate=True,gan_weights='gan_weights.h5')
