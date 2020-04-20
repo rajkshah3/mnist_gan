@@ -209,11 +209,13 @@ def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_bat
     for i in range(training_steps):
 
         if(generate):
+            print('training Generator')
             gan.set_mode_to_generate()
             gan.compile(optimizer='sgd',loss=generator_loss,metrics=['accuracy',generator_loss,discriminator_loss])
             generate = False
             batch_size = gen_batch_size
         else:
+            print('training Discriminator')
             gan.set_mode_to_discriminate()
             gan.compile(optimizer='sgd',loss=discriminator_loss,metrics=['accuracy',generator_loss,discriminator_loss])
             generate = True
