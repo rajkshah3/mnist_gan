@@ -26,7 +26,7 @@ else:
 
 def get_gan_data(images,input_shape):
 
-    actuals = np.random.randint(0, 1,size=images.shape[0])
+    actuals = np.random.randint(0, 2,size=images.shape[0])
     random_noise_data = get_n_random_inputs_for_gan(images.shape[0],input_shape)
     
     return [random_noise_data,images,actuals], actuals
@@ -186,7 +186,7 @@ def test_unet():
     preds = gen.predict(random_noise_data)
     return True
 
-def test_gan(generate=False,gan_weights=None,epochs=20):
+def test_gan(generate=False,gan_weights=None,epochs=10):
     data = mnist_data()
 
     gan = load_gan(backbone_data=data,gan_weights=gan_weights,backbone_weights='backbone_trained_weights.npy',
@@ -212,6 +212,8 @@ def test_gan(generate=False,gan_weights=None,epochs=20):
     else:
         gan.set_mode_to_discriminate()
         gan.compile(optimizer='adam',loss=discriminator_loss,metrics=['accuracy',generator_loss,discriminator_loss])
+
+    import pdb; pdb.set_trace()  # breakpoint ed9a5ceb //
 
     gan.fit(x=train_data_x,y=train_data_y,batch_size=1000,epochs=epochs, validation_data=(validation_data_x, validation_data_y),callbacks=[])
 
@@ -284,7 +286,7 @@ if __name__ == '__main__':
     # train()
     # test_resgen()
     # test_unet()
-    train_classifier()
+    # train_classifier()
     test_gan()
     test_gan(generate=True,gan_weights='gan_weights.h5')
     test_gan(generate=True,gan_weights='gan_weights.h5')
