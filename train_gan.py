@@ -4,11 +4,11 @@ import tensorflow.keras as keras
 import numpy as np 
 import tensorflow as tf
 import os
-
 #todo
 #Check if backbone is copied by value or reference
 #How to freeze layers
 #Environment for transfer learning and swapping between models easily
+bce = tf.keras.losses.BinaryCrossentropy()
 
 
 try:
@@ -22,8 +22,26 @@ if tpu:
     print('Running on TPU ', tpu.cluster_spec().as_dict()['worker'])  
 else:
     strategy = tf.distribute.get_strategy() # Default strategy that works on CPU and single GPU
-    print('Running on CPU instead')
+    print('Running on CPU instead')    
 
+def get_gan_data(images,input_shape):
+
+    actuals = np.random.randint(0, 1,size=images.shape[0])
+    random_noise_data = get_n_random_inputs_for_gan(images.shape[0],input_shape)
+    
+    return [random_noise_data,images,actuals], actuals
+
+def get_n_random_inputs_for_gan(n,input_shape):
+    rand_data_shape = ((n,) + input_shape[1:] + (1,))
+    random_noise_data = np.random.normal(size=rand_data_shape)
+    return random_noise_data
+
+def generator_loss(y_true, y_pred, sample_weight=None):
+    y_true = tf.ones_like(y_true) - y_true
+    return bce(y_true,y_pred,sample_weight)
+
+def discriminator_loss(y_true, y_pred, sample_weight=None):
+    return bce(y_true,y_pred,sample_weight)
 
 def test_resgen():
     data = mnist_data()
@@ -47,7 +65,7 @@ def load_generator(backbone_data=None,generator_weights='generator_weights.h5',b
     backbone = ResNet()
     backbone(backbone_data.get_test()[0])
     # import pdb; pdb.set_trace()  # breakpoint 9e595caa //
-    generator = ResGen(backbone)
+    generator = ResGen(backbone,'MnistGenerator')
     if(generator_weights):
         generator.load_weights(generator_weights)
     if(backbone_weights):
@@ -58,7 +76,7 @@ def load_generator(backbone_data=None,generator_weights='generator_weights.h5',b
 def load_gan(backbone_data=None,gan_weights='gan_weights.h5',
     backbone_weights='backbone_posttrained_weights.h5',
     generator_weights=None,
-    discriminator_weights='None',
+    discriminator_weights=None,
     clear_session=True):
 
     if(clear_session):
@@ -75,14 +93,12 @@ def load_gan(backbone_data=None,gan_weights='gan_weights.h5',
     # x = generator(x)
     # return  keras.model(inputs=[inp],outputs=[x])
 
-    input_shape   = generator.get_input_shape()
-
-    rand_data_shape = ((50,) + input_shape[1:] + (1,))
-    random_noise_data = np.random.normal(size=rand_data_shape)
-
     gan = GAN(generator=generator,discriminator=discriminator)
 
     if(gan_weights):
+        input_shape   = generator.get_input_shape()
+        input_x, _ = get_gan_data(backbone_data.get_n_samples(10)[0],input_shape)
+        gan.predict(input_x)
         gan.load_weights(gan_weights)
 
     return gan
@@ -170,29 +186,41 @@ def test_unet():
     preds = gen.predict(random_noise_data)
     return True
 
-def test_gan():
+def test_gan(generated=False,gan_weights=None):
     data = mnist_data()
 
-    gan = load_gan(backbone_data=data,gan_weights=None,backbone_weights='backbone_trained_weights.npy',generator_weights=None,discriminator_weights= None,clear_session=True)
+    gan = load_gan(backbone_data=data,gan_weights=gan_weights,backbone_weights='backbone_trained_weights.npy',
+        generator_weights=None,discriminator_weights= None,clear_session=True)
 
     generator = gan.get_generator()
     input_shape   = generator.get_input_shape()
 
     # discriminator = gan.get_discriminator()
-
     images = data.get_n_samples(100)[0]
-    actuals = np.random.randint(0, 1,size=images.shape[0])
 
-    rand_data_shape = ((images.shape[0],) + input_shape[1:] + (1,))
-    random_noise_data = np.random.normal(size=rand_data_shape)
+    train_data_x, train_data_y = get_gan_data(images,input_shape)
+    validation_data_x, validation_data_y = get_gan_data(data.get_vali()[0])
     
-    outputs = gan.predict([random_noise_data,images,actuals],batch_size=12)
+
+    outputs = gan.predict(train_data_x,batch_size=12)
     # gan.train()
     # outputs = gan.predict(random_noise_data,batch_size=32)
-    gan.set_mode_to_discriminate()
-    gan.fit(x=[random_noise_data[:100],images[:100],actuals[:100]],y=actuals[:100],batch_size=6000,epochs=1, validation_data=data.get_vali(),callbacks=[checkpoint])
+    if(generated):
+        gan.set_mode_to_generate()
+        gan.compile(optimizer='adam',loss=generator_loss,metrics=['accuracy',generator_loss,discriminator_loss])
+    else:
+        gan.set_mode_to_discriminate()
+        gan.compile(optimizer='adam',loss=discriminator_loss,metrics=['accuracy',generator_loss,discriminator_loss])
+
+    gan.fit(x=train_data_x,y=train_data_y,batch_size=6000,epochs=5, validation_data=(validation_data_x, validation_data_y),callbacks=[])
+
 
     gan.save_weights('gan_weights.h5')
+
+    rand_test_data = get_n_random_inputs(10)
+    test_images  = generator(rand_test_data)
+    train_images = generator(train_data_x[0][:10])
+
 
     return True
 
@@ -239,7 +267,7 @@ def train_classifier():
     classifier = load_classifier(data=data,classes=10,classifier_weights=None,backbone_weights=None)
     
     classifier.compile(optimizer='adam',loss='sparse_categorical_crossentropy',metrics=['accuracy'])
-    classifier.predict(data.get_test_data()[0])
+    classifier.predict(data.get_test()[0])
     classifier.summary()
     classifier.fit(x=data.get_n_samples(100)[0],y=data.get_n_samples(100)[1],batch_size=6000,epochs=1, validation_data=data.get_vali())
 
@@ -255,5 +283,5 @@ if __name__ == '__main__':
     # train()
     # test_resgen()
     # test_unet()
-    train_classifier()
+    # train_classifier()
     test_gan()

@@ -93,14 +93,17 @@ class GAN(keras.Model):
         super(GAN, self).__init__(name='GAN')
         self.generator = generator
         self.discriminator = discriminator
+        self.set_mode_to_discriminate()
 
     def set_mode_to_generate(self):
         self.generator.trainable = False
         self.discriminator.trainable = True
+        self.generate_mode = True
 
     def set_mode_to_discriminate(self):
         self.generator.trainable = True
         self.discriminator.trainable = False
+        self.generate_mode = False
 
     def get_generator(self):
         return self.generator
@@ -108,16 +111,42 @@ class GAN(keras.Model):
     def get_discriminator(self):
         return self.discriminator
 
+    def save_weights(self):
+        swapped = False
+        if(self.generate_mode):
+            self.set_mode_to_discriminate()
+            swapped = True
+
+        super(GAN, self).save_weights(name)
+        
+        if(swapped):
+            self.set_mode_to_generate()
+
+    def load_weights(self,name):
+        swapped = False
+        if(self.generate_mode):
+            self.set_mode_to_discriminate()
+            swapped = True
+
+        super(GAN, self).load_weights(name)
+        
+        if(swapped):
+            self.set_mode_to_generate()
+
     def compute_output_shape(self,input_shape):
         return self.discriminator.compute_output_shape(input_shape)
 
     def select_candidates_from_examples(self,candidates,examples,real_or_generated):
+        real_or_generated = tf.cast(real_or_generated, tf.float32)
 
         # real_or_generated = keras.backend.expand_dims(real_or_generated,1)
         # cands = keras.backend.reshape(candidates,(-1,*examples.shape[1:]))
         # real_or_generated = tf.broadcast_to(real_or_generated,(-1,*examples.shape[1:]))  
         # exgs = examples * real_or_generated
         one_minus_real_or_generated = tf.ones_like(real_or_generated) - real_or_generated
+        # if(self.generate_mode is True):
+        #     saved = one_minus_real_or_generated
+        #     one_minus_real_or_generated = real_or_generated
 
         #Manually Broadcast and multiplication implementation (probably faster but inelegant)
         #Outputs of code tested against einsum calculations
@@ -155,8 +184,8 @@ class GAN(keras.Model):
         return outputs
 
 class ResGen(LayerABC):
-    def __init__(self,backbone):
-        super(ResGen, self).__init__(name='ResGen')
+    def __init__(self,backbone,name='UnNamed'):
+        super(ResGen, self).__init__(name='ResGen_{}'.format(name))
         #28,28
         self.backbone = backbone
         self.upsample   = keras.layers.UpSampling2D(size=(2, 2),interpolation='nearest')
