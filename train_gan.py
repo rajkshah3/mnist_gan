@@ -272,7 +272,7 @@ def train_classifier():
     classifier.compile(optimizer='adam',loss='sparse_categorical_crossentropy',metrics=['accuracy'])
     classifier.predict(data.get_test()[0])
     classifier.summary()
-    classifier.fit(x=data.get_train()[0],y=data.get_train()[1],batch_size=6000,epochs=20, validation_data=data.get_vali())
+    classifier.fit(x=data.get_train()[0],y=data.get_train()[1],batch_size=1000,epochs=10, validation_data=data.get_vali())
 
 
     backbone = classifier.get_backbone()
