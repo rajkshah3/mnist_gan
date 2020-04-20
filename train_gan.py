@@ -223,7 +223,7 @@ def test_gan(generate=False,gan_weights=None,epochs=20):
     train_images = generator(train_data_x[0][:10])
 
 
-    return True
+    return gan
 
 def train_classifier_depricated(tpu=False):
 
