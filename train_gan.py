@@ -224,7 +224,7 @@ def test_gan(generate=False,gan_weights=None,epochs=10):
     train_images = generator(train_data_x[0][:10])
 
 
-    return gan
+    return gan, validation_data_x
 
 def train_classifier_depricated(tpu=False):
 
@@ -263,7 +263,7 @@ def convert_model_for_tpu(model):
             tpu='grpc://'+os.environ['COLAB_TPU_ADDR']))
     return tf.contrib.tpu.keras_to_tpu_model(model,strategy=strategy)
 
-def train_classifier():
+def train_classifier(epchs=5):
     data = mnist_data()
 
     classifier = load_classifier(data=data,classes=10,classifier_weights=None,backbone_weights=None)
@@ -271,7 +271,7 @@ def train_classifier():
     classifier.compile(optimizer='adam',loss='sparse_categorical_crossentropy',metrics=['accuracy'])
     classifier.predict(data.get_test()[0])
     classifier.summary()
-    classifier.fit(x=data.get_train()[0],y=data.get_train()[1],batch_size=1000,epochs=10, validation_data=data.get_vali())
+    classifier.fit(x=data.get_train()[0],y=data.get_train()[1],batch_size=1000,epochs=epochs, validation_data=data.get_vali())
 
 
     backbone = classifier.get_backbone()
