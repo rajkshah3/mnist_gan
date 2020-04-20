@@ -213,7 +213,6 @@ def test_gan(generate=False,gan_weights=None,epochs=10):
         gan.set_mode_to_discriminate()
         gan.compile(optimizer='adam',loss=discriminator_loss,metrics=['accuracy',generator_loss,discriminator_loss])
 
-    import pdb; pdb.set_trace()  # breakpoint ed9a5ceb //
 
     gan.fit(x=train_data_x,y=train_data_y,batch_size=1000,epochs=epochs, validation_data=(validation_data_x, validation_data_y),callbacks=[])
 
