@@ -206,7 +206,7 @@ def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100):
     outputs = gan.predict(train_data_x,batch_size=12)
     # gan.train()
     # outputs = gan.predict(random_noise_data,batch_size=32)
-    for i in range(10):
+    for i in range(training_steps):
 
         if(generate):
             gan.set_mode_to_generate()
