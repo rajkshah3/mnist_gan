@@ -226,6 +226,7 @@ def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_bat
 
         gan.fit(x=train_data_x,y=train_data_y,batch_size=batch_size,epochs=epochs, validation_data=(validation_data_x, validation_data_y),callbacks=[])
         gan.save_weights('gan_weights.h5')
+        
 
     rand_test_data = get_n_random_inputs_for_gan(10,input_shape)
     test_images  = generator(rand_test_data)
