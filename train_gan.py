@@ -263,7 +263,7 @@ def convert_model_for_tpu(model):
             tpu='grpc://'+os.environ['COLAB_TPU_ADDR']))
     return tf.contrib.tpu.keras_to_tpu_model(model,strategy=strategy)
 
-def train_classifier(epchs=5):
+def train_classifier(epochs=5):
     data = mnist_data()
 
     classifier = load_classifier(data=data,classes=10,classifier_weights=None,backbone_weights=None)
