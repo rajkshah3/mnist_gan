@@ -246,7 +246,7 @@ def train_classifier_depricated(tpu=False):
 
     checkpoint = keras.callbacks.ModelCheckpoint('./checkpoints/classifier/classifier_{epoch:.2f}.h5', monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=True)
     # classifier.fit(x=x_train,y=y_train,batch_size=6000,epochs=1, validation_data=(x_vali,y_vali),callbacks=[checkpoint])
-    classifier.fit(x=data.get_n_samples(100)[0],y=data.get_n_samples(100)[1],batch_size=6000,epochs=1, validation_data=data.get_vali(),callbacks=[checkpoint])
+    classifier.fit(x=data.get_train()[0],y=data.get_train()[1],batch_size=6000,epochs=20, validation_data=data.get_vali(),callbacks=[checkpoint])
     # import pdb; pdb.set_trace()  # breakpoint 396fe169 //
     backbone =  classifier.get_backbone()
     backbone.save_weights('backbone_weights.h5')
@@ -270,7 +270,7 @@ def train_classifier():
     classifier.compile(optimizer='adam',loss='sparse_categorical_crossentropy',metrics=['accuracy'])
     classifier.predict(data.get_test()[0])
     classifier.summary()
-    classifier.fit(x=data.get_n_samples(100)[0],y=data.get_n_samples(100)[1],batch_size=6000,epochs=1, validation_data=data.get_vali())
+    classifier.fit(x=data.get_train()[0],y=data.get_train()[1],batch_size=6000,epochs=20, validation_data=data.get_vali())
 
 
     backbone = classifier.get_backbone()
