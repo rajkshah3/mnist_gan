@@ -204,6 +204,8 @@ class Generator(LayerABC):
         self.comb_conv2 = keras.layers.Conv2D(256,padding='same',kernel_size=(4,4))
 
         self.conv_out = keras.layers.Conv2D(1,padding='same',kernel_size=(1,1))
+        self.scale = 5
+        self.final_activation = keras.layers.Activation(tf.nn.tanh)
 
     def compute_output_shape(self,input_shape):
         return self.get_output_shape()
@@ -224,6 +226,7 @@ class Generator(LayerABC):
         x = self.upsample(x)
         x = self.comb_conv2(x)
         x = self.conv_out(x)
+        x = tf.multiply(self.final_activation(x),self.scale)
         return x
 
 
