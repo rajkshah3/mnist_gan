@@ -266,7 +266,7 @@ def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_bat
         if(generate):
             print('training Generator')
             gan.set_mode_to_generate()
-            gan.compile(optimizer=sgd,loss=generator_loss,metrics=['accuracy',generator_loss,discriminator_loss])
+            gan.compile(optimizer=sgd1,loss=generator_loss,metrics=['accuracy',generator_loss,discriminator_loss])
             generate = False
             batch_size = gen_batch_size
         else:
