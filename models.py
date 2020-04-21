@@ -111,6 +111,7 @@ class GAN(keras.Model):
     def set_mode_to_discriminate(self):
         self.generator.trainable = False
         self.discriminator.trainable = True
+        self.discriminator.freeze_batchnorms()
         self.generate_mode = False
 
     def get_generator(self):
@@ -401,10 +402,11 @@ class Discriminator(LayerABC):
         #28,28
         self.backbone = backbone
         self.backbone.freeze_batchnorms()
-        
+
     def build(self,input_shape):
         self.flatten = keras.layers.Flatten()
         self.init = keras.initializers.VarianceScaling(scale=1.0, mode='fan_in', distribution='normal', seed=None)
+        self.cl = keras.layers.Dense(256,activation='relu',kernel_initializer=self.init)
         self.classifier_layer = keras.layers.Dense(1,activation='sigmoid',kernel_initializer=self.init)
         super(Discriminator, self).build(input_shape)
 
@@ -417,6 +419,7 @@ class Discriminator(LayerABC):
     def call(self,inputs):
         x = self.backbone(inputs)
         x = self.flatten(x)
+        x = self.cl(x)
         return self.classifier_layer(x)
 
     def compute_output_shape(self,input_shape):
@@ -512,8 +515,8 @@ class ResBlock(LayerABC):
         return self.conv3.output_shape
 
     def freeze_batchnorms(self):
-        self.bn1.training = False
-        self.bn2.training = False
+        self.bn1.trainable = False
+        self.bn2.trainable = False
 
     def call(self, inputs):
         # import pdb; pdb.set_trace()  # breakpoint fba01bec //

@@ -25,16 +25,16 @@ else:
     strategy = tf.distribute.get_strategy() # Default strategy that works on CPU and single GPU
     print('Running on CPU instead')    
 
-def get_gan_data(images,input_shape):
+def get_gan_data(images,input_shape,seed=None):
 
     actuals = np.random.randint(0, 2,size=images.shape[0])
-    random_noise_data = get_n_random_inputs_for_gan(images.shape[0],input_shape)
+    random_noise_data = get_n_random_inputs_for_gan(images.shape[0],input_shape,seed=seed)
     
     return [random_noise_data,images,actuals], actuals
 
-def get_n_random_inputs_for_gan(n,input_shape):
+def get_n_random_inputs_for_gan(n,input_shape,seed):
     rand_data_shape = ((n,) + input_shape[1:3] + (1,))
-    random_noise_data = np.random.normal(loc=0,scale=100,size=rand_data_shape)
+    random_noise_data = np.random.normal(loc=0,scale=100,size=rand_data_shape,seed=seed)
     return random_noise_data
 
 def generator_loss(y_true, y_pred, sample_weight=None):
@@ -247,7 +247,7 @@ def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_bat
 
     train_data_x, train_data_y = get_gan_data(images,input_shape)
     # validation_data_x, validation_data_y = get_gan_data(data.get_n_samples(200)[0],input_shape)
-    validation_data_x, validation_data_y = get_gan_data(data.get_vali()[0],input_shape)
+    validation_data_x, validation_data_y = get_gan_data(data.get_vali()[0],input_shape,seed=128)
 
 
     outputs = gan.predict(train_data_x,batch_size=12)
