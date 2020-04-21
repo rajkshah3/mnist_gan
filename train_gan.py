@@ -1,6 +1,7 @@
 #gan training script
 from models import ResNet, Discriminator, Classifier, ResGen, Unet, mnist_data, GAN, Generator
 import tensorflow.keras as keras
+from tensorflow.keras import optimizers
 import numpy as np 
 import tensorflow as tf
 import os
@@ -252,7 +253,6 @@ def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_bat
     outputs = gan.predict(train_data_x,batch_size=12)
     # gan.train()
     # outputs = gan.predict(random_noise_data,batch_size=32)
-    from keras import optimizers
 
     # All parameter gradients will be clipped to
     # a maximum norm of 1.
