@@ -99,6 +99,8 @@ class GAN(keras.Model):
         super(GAN, self).__init__(name='GAN')
         self.generator = generator
         self.discriminator = discriminator
+        # self.generator = ModelFromLayer(self.generator_layer)
+        # self.discriminator = ModelFromLayer(self.discriminator_layer)
         self.set_mode_to_discriminate()
 
     def set_mode_to_generate(self):
@@ -188,6 +190,40 @@ class GAN(keras.Model):
         inputs_for_discriminator = self.select_candidates_from_examples(candidates,examples,real_or_generated)
         outputs = self.discriminator(inputs_for_discriminator)
         return outputs
+
+
+class Generator(LayerABC):
+    def __init__(self,name='UnNamed'):
+        super(Generator, self).__init__(name='Generator_{}'.format(name))
+        #28,28
+        self.upsample   = keras.layers.UpSampling2D(size=(2, 2),interpolation='nearest')
+        self.c1     = keras.layers.Conv2D(256,padding='same',kernel_size=(2,2))
+
+        self.comb_conv1 = keras.layers.Conv2D(64,padding='same',kernel_size=(2,2))
+
+        self.comb_conv2 = keras.layers.Conv2D(64,padding='same',kernel_size=(2,2))
+
+        self.conv_out = keras.layers.Conv2D(1,padding='same',kernel_size=(1,1))
+
+    def compute_output_shape(self,input_shape):
+        return self.get_output_shape()
+
+    def get_output_shape(self):
+        return self.conv_out.output_shape
+
+    def get_input_shape(self):
+        return self.iinput_shape
+
+    def call(self,inputs):
+        self.iinput_shape = inputs.shape
+        x = self.c1(inputs)
+        x = self.upsample(x)
+        x = self.comb_conv1(x)
+        x = self.upsample(x)
+        x = self.comb_conv2(x)
+        x = self.conv_out(x)
+        return x
+
 
 class ResGen(LayerABC):
     def __init__(self,backbone,name='UnNamed'):
