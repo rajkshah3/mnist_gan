@@ -197,11 +197,11 @@ class Generator(LayerABC):
         super(Generator, self).__init__(name='Generator_{}'.format(name))
         #28,28
         self.upsample   = keras.layers.UpSampling2D(size=(2, 2),interpolation='nearest')
-        self.c1     = keras.layers.Conv2D(256,padding='same',kernel_size=(2,2))
+        self.c1     = keras.layers.Conv2D(256,padding='same',kernel_size=(4,4))
         self.activation = keras.layers.LeakyReLU()
-        self.comb_conv1 = keras.layers.Conv2D(256,padding='same',kernel_size=(2,2))
+        self.comb_conv1 = keras.layers.Conv2D(256,padding='same',kernel_size=(4,4))
 
-        self.comb_conv2 = keras.layers.Conv2D(256,padding='same',kernel_size=(2,2))
+        self.comb_conv2 = keras.layers.Conv2D(256,padding='same',kernel_size=(4,4))
 
         self.conv_out = keras.layers.Conv2D(1,padding='same',kernel_size=(1,1))
 
@@ -223,7 +223,6 @@ class Generator(LayerABC):
         x = self.activation(x)
         x = self.upsample(x)
         x = self.comb_conv2(x)
-        x = self.activation(x)
         x = self.conv_out(x)
         return x
 
