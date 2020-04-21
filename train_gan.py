@@ -256,8 +256,8 @@ def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_bat
 
     # All parameter gradients will be clipped to
     # a maximum norm of 1.
-    sgd1 = optimizers.SGD(lr=0.01, clipnorm=1.)
-    sgd2 = optimizers.SGD(lr=0.01, clipnorm=1.)
+    sgd1 = optimizers.SGD(lr=0.01, clipvalue=1.)
+    sgd2 = optimizers.SGD(lr=0.01, clipvalue=1.)
 
     for i in range(training_steps):
         images = data.get_randn_samples(train_images)[0]
