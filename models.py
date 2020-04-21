@@ -400,7 +400,8 @@ class Discriminator(LayerABC):
         super(Discriminator, self).__init__(name='Discriminator')
         #28,28
         self.backbone = backbone
-
+        self.backbone.freeze_batchnorms()
+        
     def build(self,input_shape):
         self.flatten = keras.layers.Flatten()
         self.init = keras.initializers.VarianceScaling(scale=1.0, mode='fan_in', distribution='normal', seed=None)
@@ -444,10 +445,26 @@ class ResNet(LayerABC):
         self.block7 = ResBlock(64,64,128,first_stride=2,name='block7')
         self.block8 = ResBlock(64,64,128,name='block8')
         self.block9 = ResBlock(64,64,128,name='block9')
+        self.blocks = [
+                self.block1,
+                self.block2,
+                self.block3,
+                #14,14
+                self.block4,
+                self.block5,
+                self.block6,
+                #7,7
+                self.block7,
+                self.block8,
+                self.block9,
+        ] 
         super(ResNet, self).build(input_shape)
 
     def compute_output_shape(self,input_shape):
         return self.block9.output_shape
+
+    def freeze_batchnorms(self):
+        [block.freeze_batchnorms() for block in self.blocks]
 
     def call(self, inputs):
         # import pdb; pdb.set_trace()  # breakpoint c5203db7 //
@@ -493,6 +510,10 @@ class ResBlock(LayerABC):
 
     def compute_output_shape(self,input_shape):
         return self.conv3.output_shape
+
+    def freeze_batchnorms(self):
+        self.bn1.training = False
+        self.bn2.training = False
 
     def call(self, inputs):
         # import pdb; pdb.set_trace()  # breakpoint fba01bec //
