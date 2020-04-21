@@ -33,8 +33,10 @@ def get_gan_data(images,input_shape,seed=None):
     return [random_noise_data,images,actuals], actuals
 
 def get_n_random_inputs_for_gan(n,input_shape,seed=None):
+    if seed:
+        np.random.seed(seed)
     rand_data_shape = ((n,) + input_shape[1:3] + (1,))
-    random_noise_data = np.random.normal(loc=0,scale=100,size=rand_data_shape,seed=seed)
+    random_noise_data = np.random.normal(loc=0,scale=100,size=rand_data_shape)
     return random_noise_data
 
 def generator_loss(y_true, y_pred, sample_weight=None):
