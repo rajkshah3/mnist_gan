@@ -252,6 +252,13 @@ def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_bat
     outputs = gan.predict(train_data_x,batch_size=12)
     # gan.train()
     # outputs = gan.predict(random_noise_data,batch_size=32)
+    from keras import optimizers
+
+    # All parameter gradients will be clipped to
+    # a maximum norm of 1.
+    sgd1 = optimizers.SGD(lr=0.01, clipnorm=1.)
+    sgd2 = optimizers.SGD(lr=0.01, clipnorm=1.)
+
     for i in range(training_steps):
         images = data.get_randn_samples(train_images)[0]
         train_data_x, train_data_y = get_gan_data(images,input_shape)
@@ -259,13 +266,13 @@ def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_bat
         if(generate):
             print('training Generator')
             gan.set_mode_to_generate()
-            gan.compile(optimizer='sgd',loss=generator_loss,metrics=['accuracy',generator_loss,discriminator_loss])
+            gan.compile(optimizer=sgd,loss=generator_loss,metrics=['accuracy',generator_loss,discriminator_loss])
             generate = False
             batch_size = gen_batch_size
         else:
             print('training Discriminator')
             gan.set_mode_to_discriminate()
-            gan.compile(optimizer='sgd',loss=discriminator_loss,metrics=['accuracy',generator_loss,discriminator_loss])
+            gan.compile(optimizer=sgd2,loss=discriminator_loss,metrics=['accuracy',generator_loss,discriminator_loss])
             generate = True
             batch_size = dis_batch_size
 
