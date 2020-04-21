@@ -198,7 +198,7 @@ class Generator(LayerABC):
         #28,28
         self.upsample   = keras.layers.UpSampling2D(size=(2, 2),interpolation='nearest')
         self.c1     = keras.layers.Conv2D(256,padding='same',kernel_size=(2,2))
-        self.activation = keras.layers.LeakyRelu()
+        self.activation = keras.layers.LeakyReLU()
         self.comb_conv1 = keras.layers.Conv2D(256,padding='same',kernel_size=(2,2))
 
         self.comb_conv2 = keras.layers.Conv2D(256,padding='same',kernel_size=(2,2))
