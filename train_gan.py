@@ -287,7 +287,7 @@ def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_bat
                 if(hist['val_accuracy'][-1]<0.6 or hist['accuracy'][-1]<0.6):
                     break
             else:
-                if(hist['val_accuracy'][-1]>0.95 or hist['accuracy'][-1]<0.95):
+                if(hist['val_accuracy'][-1]>0.9 or hist['accuracy'][-1]>0.95):
                     break
         gan.save_weights('gan_weights.h5')
 
