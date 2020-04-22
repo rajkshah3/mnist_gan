@@ -166,10 +166,11 @@ def load_classifier(data=None,classes=10,classifier_weights='classifier_weights.
 
     return classifier
 
-def load_discriminator(data=None,discriminator_weights='discriminator_weights.h5',backbone_weights='backbone_posttrained_weights.h5',clear_session=True):
+def load_discriminator(data=None,discriminator_weights=None,backbone_weights='backbone_posttrained_weights.h5',clear_session=True):
     if(clear_session):
         keras.backend.clear_session()
     backbone = ResNet()
+    import pdb; pdb.set_trace()  # breakpoint 4cf78771 //
     backbone(data.get_test()[0])
     discriminator = Discriminator(backbone)
     if(discriminator_weights):
@@ -238,7 +239,7 @@ def test_unet():
 def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_batch_size=300,dis_batch_size=1000,train_images=3000):
     data = mnist_data()
 
-    gan = load_gan2(backbone_data=data,gan_weights=gan_weights,backbone_weights='backbone_trained_weights.npy',
+    gan = load_gan2(backbone_data=data,gan_weights=None,backbone_weights=None,
         generator_weights=None,discriminator_weights= None,clear_session=True)
 
     generator = gan.get_generator()
@@ -326,7 +327,7 @@ def convert_model_for_tpu(model):
             tpu='grpc://'+os.environ['COLAB_TPU_ADDR']))
     return tf.contrib.tpu.keras_to_tpu_model(model,strategy=strategy)
 
-def train_classifier(epochs=5):
+def train_classifier(epochs=2):
     data = mnist_data()
 
     classifier = load_classifier(data=data,classes=10,classifier_weights=None,backbone_weights=None)
@@ -350,5 +351,5 @@ if __name__ == '__main__':
     # test_unet()
     # train_classifier()
     # test_gan()
-    test_gan(generate=True,gan_weights=None,training_steps=3,epochs=3,train_images=100)
+    test_gan(generate=True,gan_weights=None,training_steps=1,epochs=3,train_images=100)
     # test_gan(generate=True,gan_weights='gan_weights.h5')

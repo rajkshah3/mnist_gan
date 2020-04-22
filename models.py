@@ -102,7 +102,7 @@ class GAN(keras.Model):
         # self.generator = ModelFromLayer(self.generator_layer)
         # self.discriminator = ModelFromLayer(self.discriminator_layer)
         self.set_mode_to_discriminate()
-
+        
     def set_mode_to_generate(self):
         self.generator.trainable = True
         self.discriminator.trainable = False
@@ -402,6 +402,7 @@ class Discriminator(LayerABC):
         #28,28
         self.backbone = backbone
         self.backbone.freeze_batchnorms()
+        self.frozen_batchnorms = True
 
     def build(self,input_shape):
         self.flatten = keras.layers.Flatten()
@@ -412,6 +413,10 @@ class Discriminator(LayerABC):
 
     def get_backbone(self):
         return self.backbone
+
+    def freeze_batchnorms(self):
+        self.backbone.freeze_batchnorms()
+        self.frozen_batchnorms = True
 
     def set_backbone(self,backbone):
         self.backbone = backbone
@@ -430,6 +435,8 @@ class Discriminator(LayerABC):
 
     def unfix_backbone_weights(self):
         self.backbone.trainable = True
+        if self.frozen_batchnorms:
+            self.freeze_batchnorms()
 
 class ResNet(LayerABC):
     def __init__(self,):
