@@ -238,7 +238,7 @@ def test_unet():
 def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_batch_size=300,dis_batch_size=1000,train_images=3000):
     data = mnist_data()
 
-    gan = load_gan2(backbone_data=data,gan_weights=None,backbone_weights=None,
+    gan = load_gan2(backbone_data=data,gan_weights=gan_weights,backbone_weights=None,
         generator_weights=None,discriminator_weights= None,clear_session=True)
 
     generator = gan.get_generator()
