@@ -280,7 +280,8 @@ def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_bat
             generate = True
             batch_size = dis_batch_size
 
-        gan.fit(x=train_data_x,y=train_data_y,batch_size=batch_size,epochs=epochs, validation_data=(validation_data_x, validation_data_y),callbacks=[])
+        output = gan.fit(x=train_data_x,y=train_data_y,batch_size=batch_size,epochs=epochs, validation_data=(validation_data_x, validation_data_y),callbacks=[])
+        import pdb; pdb.set_trace()  # breakpoint ba5309bb //
         gan.save_weights('gan_weights.h5')
 
 
