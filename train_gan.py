@@ -170,7 +170,6 @@ def load_discriminator(data=None,discriminator_weights=None,backbone_weights='ba
     if(clear_session):
         keras.backend.clear_session()
     backbone = ResNet()
-    import pdb; pdb.set_trace()  # breakpoint 4cf78771 //
     backbone(data.get_test()[0])
     discriminator = Discriminator(backbone)
     if(discriminator_weights):
