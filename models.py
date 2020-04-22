@@ -102,7 +102,7 @@ class GAN(keras.Model):
         # self.generator = ModelFromLayer(self.generator_layer)
         # self.discriminator = ModelFromLayer(self.discriminator_layer)
         self.set_mode_to_discriminate()
-        
+
     def set_mode_to_generate(self):
         self.generator.trainable = True
         self.discriminator.trainable = False
@@ -208,6 +208,10 @@ class Generator(LayerABC):
         self.scale = 5
         self.final_activation = keras.layers.Activation(tf.nn.tanh)
 
+        self.bn1 = keras.layers.BatchNormalization()
+        self.bn2 = keras.layers.BatchNormalization()
+        self.bn3 = keras.layers.BatchNormalization()
+
     def compute_output_shape(self,input_shape):
         return self.get_output_shape()
 
@@ -220,12 +224,15 @@ class Generator(LayerABC):
     def call(self,inputs):
         self.iinput_shape = inputs.shape
         x = self.c1(inputs)
+        x = self.bn1(x)
         x = self.activation(x)
         x = self.upsample(x)
         x = self.comb_conv1(x)
+        x = self.bn2(x)
         x = self.activation(x)
         x = self.upsample(x)
         x = self.comb_conv2(x)
+        x = self.bn3(x)
         x = self.conv_out(x)
         x = tf.multiply(self.final_activation(x),self.scale)
         return x
