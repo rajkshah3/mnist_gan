@@ -235,6 +235,9 @@ def test_unet():
     preds = gen.predict(random_noise_data)
     return True
 
+sgd1 = optimizers.SGD(lr=0.01)
+sgd2 = optimizers.SGD(lr=0.001)
+
 def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_batch_size=300,dis_batch_size=1000,train_images=3000):
     data = mnist_data()
 
@@ -258,8 +261,7 @@ def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_bat
 
     # All parameter gradients will be clipped to
     # a maximum norm of 1.
-    sgd1 = optimizers.SGD(lr=0.01)
-    sgd2 = optimizers.SGD(lr=0.001)
+
 
     for i in range(training_steps):
         images = data.get_randn_samples(train_images)[0]
