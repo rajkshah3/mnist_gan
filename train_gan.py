@@ -280,7 +280,7 @@ def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_bat
             generate = True
             batch_size = dis_batch_size
 
-        for epoch in epochs:
+        for epoch in range(epochs):
             output = gan.fit(x=train_data_x,y=train_data_y,batch_size=batch_size,epochs=1, validation_data=(validation_data_x, validation_data_y),callbacks=[])
             hist = output.history
             if(generate):
