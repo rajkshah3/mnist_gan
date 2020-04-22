@@ -282,11 +282,12 @@ def test_gan(generate=False,gan_weights=None,epochs=1,training_steps=100,gen_bat
 
         for epoch in epochs:
             output = gan.fit(x=train_data_x,y=train_data_y,batch_size=batch_size,epochs=1, validation_data=(validation_data_x, validation_data_y),callbacks=[])
+            hist = output.history
             if(generate):
-                if(output['val_accuracy'][-1]<0.6 or output['accuracy'][-1]<0.6):
+                if(hist['val_accuracy'][-1]<0.6 or hist['accuracy'][-1]<0.6):
                     break
             else:
-                if(output['val_accuracy'][-1]>0.95 or output['accuracy'][-1]<0.95):
+                if(hist['val_accuracy'][-1]>0.95 or hist['accuracy'][-1]<0.95):
                     break
         gan.save_weights('gan_weights.h5')
 
