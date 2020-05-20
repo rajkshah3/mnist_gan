@@ -102,6 +102,7 @@ class GAN(keras.Model):
         # self.generator = ModelFromLayer(self.generator_layer)
         # self.discriminator = ModelFromLayer(self.discriminator_layer)
         self.set_mode_to_discriminate()
+        self.me_loss_scale = 0.01
 
     def set_mode_to_generate(self):
         self.generator.trainable = True
@@ -119,6 +120,12 @@ class GAN(keras.Model):
 
     def get_discriminator(self):
         return self.discriminator
+
+    def calc_me_loss(self,candidates,examples):
+        candidate_predictions = tf.math.reduce_sum(self.discriminator.backbone(candidates),0)
+        example_predictions = tf.math.reduce_sum(self.discriminator.backbone(examples),0)
+        diff = tf.math.abs(candidate_predictions - example_predictions)
+        return self.me_loss_scale * tf.reduce_sum(diff)
 
     def save_weights(self,name):
         swapped = False
@@ -188,6 +195,8 @@ class GAN(keras.Model):
         examples = inputs[1]
         real_or_generated =  inputs[2]
         candidates = self.generator(noise)
+        if(self.generate_mode):
+            self.add_loss(self.calc_me_loss(candidates,examples))
         inputs_for_discriminator = self.select_candidates_from_examples(candidates,examples,real_or_generated)
         outputs = self.discriminator(inputs_for_discriminator)
         return outputs
