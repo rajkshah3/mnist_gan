@@ -10,22 +10,62 @@ import tensorflow as tf
 regularizer = None #l2(0.001)
 
 def calc_averages(x):
+    """Calcualte averages
+    
+    
+    Arguments:
+        x {[iterable]} -- [input data]
+    
+    Returns:
+        [number] -- Average of numbers passed in
+    """
     averages = np.average(x,axis=0)
     return averages
 
 def calc_stds(x):
+    """Calcualte standard deviations
+    
+    
+    Arguments:
+        x {[iterable]} -- [input data]
+    
+    Returns:
+        [number] -- Standard deviations of numbers passed in
+    """
     stds = np.std(x)
     return stds
 
 def fix_weights(self,model):
+    """Fix weights
+    
+    Function that fixes all weights in a model
+    
+    Arguments:
+        model {[keras.model]} -- Output model with fixed weights
+    """
     for layer in model.layers:
         layer.trainable = False
 
 def unfix_weights(self,model):
+    """UnFix weights
+    
+    Function that releases all weights in a model
+    
+    Arguments:
+        model {[keras.model]} -- Output model with trainable weights
+    """
     for layer in model.layers:
-        layer.trainable = False
+        layer.trainable = True
 
 class ModelFromLayer(keras.Model):
+    """Model from Layer
+    
+    Subclass of keras.model which produces a keras model 
+    from a single keras layer.
+    
+    Extends:
+        keras.Model
+    """
     def __init__(self,layer):
         super(ModelFromLayer, self).__init__(name='ModelFromLayer')
         self.layer = layer
@@ -34,6 +74,12 @@ class ModelFromLayer(keras.Model):
         return self.layer(input)
 
 class LayerABC(keras.layers.Layer):
+    """Base class of a layer
+
+    
+    Extends:
+        keras.layers.Layer
+    """
     def load_weights(self,weights_file):
         weights = np.load(weights_file,allow_pickle=True)
         self.set_weights(weights)
@@ -43,6 +89,9 @@ class LayerABC(keras.layers.Layer):
         np.save(weights_file,weights,allow_pickle=True)
 
 class mnist_data():
+    """Mnist data class
+    
+    """
     def __init__(self):
         (x_train, self.y_train), (x_test, self.y_test) = mnist.load_data()
 
@@ -95,6 +144,12 @@ class mnist_data():
         return np.array(x,dtype=int)
 
 class GAN(keras.Model):
+    """GAN Class
+    
+    
+    Extends:
+        keras.Model
+    """
     def __init__(self,generator,discriminator):
         super(GAN, self).__init__(name='GAN')
         self.generator = generator
@@ -203,6 +258,12 @@ class GAN(keras.Model):
 
 
 class Generator(LayerABC):
+    """Generator Layer
+    
+    
+    Extends:
+        LayerABC
+    """
     def __init__(self,name='UnNamed'):
         super(Generator, self).__init__(name='Generator_{}'.format(name))
         #28,28
@@ -248,6 +309,14 @@ class Generator(LayerABC):
 
 
 class ResGen(LayerABC):
+    """ ResGenerator Class
+    
+    Generator class capable of using RESNET trained weights
+    to initialise.
+    
+    Extends:
+        LayerABC
+    """
     def __init__(self,backbone,name='UnNamed'):
         super(ResGen, self).__init__(name='ResGen_{}'.format(name))
         #28,28
@@ -320,6 +389,13 @@ class ResGen(LayerABC):
         return x
 
 class Unet(LayerABC):
+    """ Unet layer
+    
+    For GAN generator layer
+    
+    Extends:
+        LayerABC
+    """
     def __init__(self,backbone=None):
         super(Unet, self).__init__(name='Unet')
         #28,28
@@ -381,6 +457,13 @@ class Unet(LayerABC):
 
 
 class Classifier(keras.Model):
+    """Classifier 
+    
+    Capable of taking a resnet (or other class) as a backbone
+    
+    Extends:
+        keras.Model
+    """
     def __init__(self,backbone,num_classes):
         super(Classifier, self).__init__(name='Classifier')
         #28,28
@@ -413,6 +496,13 @@ class Classifier(keras.Model):
         self.backbone.trainable = True
 
 class Discriminator(LayerABC):
+    """Discriminator 
+    
+    Capable of taking a resnet (or other class) as a backbone
+    
+    Extends:
+        LayerABC
+    """
     def __init__(self,backbone):
         super(Discriminator, self).__init__(name='Discriminator')
         #28,28
@@ -455,6 +545,12 @@ class Discriminator(LayerABC):
             self.freeze_batchnorms()
 
 class ResNet(LayerABC):
+    """RESNET Layer
+    
+    
+    Extends:
+        LayerABC
+    """
     def __init__(self,):
         super(ResNet, self).__init__(name='ResNet')
         #28,28
@@ -506,6 +602,13 @@ class ResNet(LayerABC):
         return x
 
 class ResBlock(LayerABC):
+    """RESBlock Layer
+    
+    Building blocks of RESNET architecture
+    
+    Extends:
+        LayerABC
+    """
     def __init__(self, l1=64,l2=64,l3=256,first_stride=1,name=None):
         super(ResBlock, self).__init__(name='Resblock_{}_{}_{}_{}'.format(l1,l2,l3,name))
         # self.name = 'Resblock_{}_{}_{}_{}'.format(l1,l2,l3,name)
